@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roleta Twister Avançada</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Estilos CSS mantidos da versão anterior */
+        .spinner-container {
+            display: flex;
+            justify-content: center; /* Centraliza horizontalmente */
+            align-items: center; /* Centraliza verticalmente */
+            flex-direction: column;
+            min-height: 100vh;
+            background-color: #f0f0f0;
+            font-family: sans-serif;
+            padding: 20px; /* Adicionado padding geral */
+            box-sizing: border-box;
+        }
+
+        /* Estilo para o título principal */
+        .main-title {
+            font-size: 2.5rem; /* Tamanho grande */
+            font-weight: bold; /* Negrito */
+            color: #374151; /* Cinza escuro (gray-700) */
+            margin-bottom: 1.5rem; /* Espaço abaixo (mb-6) */
+            text-align: center; /* Centraliza o texto */
+        }
+
+
+        .spinners-wrapper {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .spinner-box {
+             display: flex;
+             flex-direction: column;
+             align-items: center;
+        }
+
+         .spinner-box h3 {
+             font-size: 1.1rem;
+             font-weight: 600;
+             margin-bottom: 10px;
+             color: #333;
+         }
+
+        .spinner {
+            width: 250px;
+            height: 250px;
+            border: 4px solid #333;
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+            background-color: white; /* Fundo padrão caso gradiente não carregue */
+            transition: transform 4s cubic-bezier(0.33, 1, 0.68, 1);
+        }
+
+        /* --- Estilos das Fatias (Roleta Mão/Pé) --- */
+        #spinnerBodyPart .slice { /* Apenas para roleta Mão/Pé */
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            transform-origin: 100% 100%;
+            overflow: hidden;
+        }
+
+        #spinnerBodyPart .slice-color { /* Apenas para roleta Mão/Pé */
+            position: absolute;
+            left: -100%; top: -100%; width: 200%; height: 200%;
+            transform-origin: 100% 100%;
+            clip-path: polygon(100% 0, 0 100%, 100% 100%); /* Forma de fatia 90 graus */
+        }
+
+        #spinnerBodyPart .slice .content { /* Apenas para roleta Mão/Pé */
+            position: absolute; top: 5%; left: 5%; width: 90%; height: 90%;
+            transform: rotate(45deg) scale(0.9);
+            text-align: center; color: black; font-weight: bold; font-size: 14px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 2;
+        }
+        #spinnerBodyPart .slice svg { width: 40px; height: 40px; margin-bottom: 8px; }
+        #spinnerBodyPart .slice span { font-size: 12px; }
+
+
+        /* --- Roleta de Cores (12 Fatias - Usando Conic Gradient) --- */
+        #spinnerColor {
+             background: conic-gradient(
+                /* 1: Vermelho */ #ef4444 0deg 30deg,
+                /* 2: Amarelo */  #facc15 30deg 60deg,
+                /* 3: Azul */    #3b82f6 60deg 90deg,
+                /* 4: Verde */   #22c55e 90deg 120deg,
+                /* 5: Vermelho */ #ef4444 120deg 150deg,
+                /* 6: Azul */    #3b82f6 150deg 180deg,
+                /* 7: Amarelo */  #facc15 180deg 210deg,
+                /* 8: Verde */   #22c55e 210deg 240deg,
+                /* 9: Vermelho */ #ef4444 240deg 270deg,
+                /* 10: Azul */   #3b82f6 270deg 300deg,
+                /* 11: Amarelo */ #facc15 300deg 330deg,
+                /* 12: Verde */  #22c55e 330deg 360deg
+             );
+        }
+
+        /* --- Roleta de Corpo/Mão (4 Fatias - Cores de Fundo e SVGs) --- */
+        #spinnerBodyPart .slice:nth-child(1) { transform: rotate(0deg); } /* Mão Direita */
+        #spinnerBodyPart .slice:nth-child(1) .slice-color { background-color: #e0e0e0; }
+
+        #spinnerBodyPart .slice:nth-child(2) { transform: rotate(90deg); } /* Pé Esquerdo */
+        #spinnerBodyPart .slice:nth-child(2) .slice-color { background-color: #f0f0f0; }
+        #spinnerBodyPart .slice:nth-child(2) svg { fill: #dc2626; } /* Vermelho */
+
+        #spinnerBodyPart .slice:nth-child(3) { transform: rotate(180deg); } /* Pé Direito */
+        #spinnerBodyPart .slice:nth-child(3) .slice-color { background-color: #e0e0e0; }
+        #spinnerBodyPart .slice:nth-child(3) svg { fill: #ca8a04; } /* Amarelo */
+
+        #spinnerBodyPart .slice:nth-child(4) { transform: rotate(270deg); } /* Mão Esquerda */
+        #spinnerBodyPart .slice:nth-child(4) .slice-color { background-color: #f0f0f0; }
+        #spinnerBodyPart .slice:nth-child(4) svg { fill: #2563eb; } /* Azul */
+
+        /* --- Ponteiro e Círculo Central (Mantido) --- */
+        .pointer {
+            width: 0; height: 0; border-left: 12px solid transparent;
+            border-right: 12px solid transparent; border-top: 20px solid #333;
+            position: absolute; top: -20px; left: 50%; transform: translateX(-50%); z-index: 10;
+        }
+        .center-circle {
+            width: 40px; height: 40px; background-color: white; border: 3px solid #333;
+            border-radius: 50%; position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%); z-index: 5;
+        }
+
+        /* --- Botões (Mantido) --- */
+        .buttons-container { display: flex; gap: 15px; margin-top: 30px; flex-wrap: wrap; justify-content: center; }
+        .spin-button {
+            padding: 10px 20px; font-size: 16px; cursor: pointer; background-color: #4CAF50; color: white;
+            border: none; border-radius: 8px; transition: background-color 0.3s, transform 0.1s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+         .spin-button:hover { background-color: #45a049; }
+         .spin-button:active { transform: scale(0.98); }
+         .spin-button:disabled { background-color: #cccccc; color: #666; cursor: not-allowed; box-shadow: none; }
+         #spinColorButton { background-color: #3b82f6; } #spinColorButton:hover { background-color: #2563eb; }
+         #spinBodyPartButton { background-color: #ef4444; } #spinBodyPartButton:hover { background-color: #dc2626; }
+
+        /* --- Caixa de Resultado e Histórico (Mantido) --- */
+        .result-box {
+            margin-top: 25px; margin-bottom: 20px; padding: 15px 20px; background-color: white;
+            border: 1px solid #ccc; border-radius: 8px; text-align: center; font-size: 20px;
+            min-height: 60px; width: 90%; max-width: 450px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center;
+        }
+        .history-container { width: 100%; max-width: 450px; margin-top: 20px; }
+        #historyTable { width: 100%; border-collapse: collapse; background-color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden; }
+        #historyTable th, #historyTable td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; }
+        #historyTable th { background-color: #f2f2f2; font-weight: bold; }
+        #historyTable td:first-child { text-align: center; width: 20%; }
+        #historyTable tr:nth-child(even) { background-color: #f9f9f9; }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <div class="spinner-container">
+
+         <h1 class="main-title">Roleta Twister</h1>
+
+        <div class="spinners-wrapper">
+            <div class="spinner-box">
+                 <h3>Cor</h3>
+                 <div class="relative">
+                     <div class="pointer"></div>
+                     <div class="spinner" id="spinnerColor">
+                         <div class="center-circle"></div>
+                         </div>
+                 </div>
+            </div>
+
+            <div class="spinner-box">
+                 <h3>Mão / Pé</h3>
+                 <div class="relative">
+                     <div class="pointer"></div>
+                     <div class="spinner" id="spinnerBodyPart">
+                         <div class="center-circle"></div>
+                         <div class="slice"> <div class="slice-color"></div>
+                             <div class="content">
+                                 <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="#16a34a"> <path d="M19.5 8.5c-.28 0-.5.22-.5.5v7c0 .28.22.5.5.5s.5-.22.5-.5v-7c0-.28-.22-.5-.5-.5zM17.5 8.5c-.28 0-.5.22-.5.5v7c0 .28.22.5.5.5s.5-.22.5-.5v-7c0-.28-.22-.5-.5-.5zM15.5 7.5c-.28 0-.5.22-.5.5v8c0 .28.22.5.5.5s.5-.22.5-.5v-8c0-.28-.22-.5-.5-.5zM13.5 7.5c-.28 0-.5.22-.5.5v8c0 .28.22.5.5.5s.5-.22.5-.5v-8c0-.28-.22-.5-.5-.5zM11 6.5c-.28 0-.5.22-.5.5v9c0 .28.22.5.5.5s.5-.22.5-.5v-9c0-.28-.22-.5-.5-.5zM8.5 10.72c-.8.5-1.5 1.3-1.5 2.28v2.5c0 .28.22.5.5.5h.5c.28 0 .5-.22.5-.5v-2.5c0-.4.3-.8.8-1.1l.4-.2c.6-.3 1-.9 1-1.6V9.5c0-.28-.22-.5-.5-.5h-1c-.28 0-.5.22-.5.5v1.22zM5.5 12.5c-.28 0-.5.22-.5.5v2.5c0 .28.22.5.5.5h.5c.28 0 .5-.22.5-.5v-2.5c0-.28-.22-.5-.5-.5h-.5z"/></svg>
+                                 <span>MÃO DIREITA</span>
+                             </div>
+                         </div>
+                         <div class="slice"> <div class="slice-color"></div>
+                             <div class="content">
+                                 <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="#dc2626"><path d="M19.5 16.5c-.83 0-1.5-.67-1.5-1.5 0-.5.25-.95.65-1.23l-3.65-6.3c-.3-.52-.88-.87-1.5-.87H8.5c-.62 0-1.2.35-1.5.88l-3.65 6.3c.4.28.65.73.65 1.22 0 .83-.67 1.5-1.5 1.5S1 15.83 1 15c0-.5.25-.95.65-1.23L5.3 7.47c.63-1.09 1.8-1.8 3.1-1.8h6c1.3 0 2.47.7 3.1 1.8l3.65 6.3c.4.28.65.73.65 1.22 0 .83-.67 1.5-1.5 1.5zM9.5 18.5c0-.28.22-.5.5-.5h4c.28 0 .5.22.5.5v1c0 .28-.22.5-.5.5h-4c-.28 0-.5-.22-.5-.5v-1z"/></svg>
+                                 <span>PÉ ESQUERDO</span>
+                             </div>
+                         </div>
+                         <div class="slice"> <div class="slice-color"></div>
+                             <div class="content">
+                                 <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" transform="scale(-1, 1)" fill="#ca8a04"><path d="M19.5 16.5c-.83 0-1.5-.67-1.5-1.5 0-.5.25-.95.65-1.23l-3.65-6.3c-.3-.52-.88-.87-1.5-.87H8.5c-.62 0-1.2.35-1.5.88l-3.65 6.3c.4.28.65.73.65 1.22 0 .83-.67 1.5-1.5 1.5S1 15.83 1 15c0-.5.25-.95.65-1.23L5.3 7.47c.63-1.09 1.8-1.8 3.1-1.8h6c1.3 0 2.47.7 3.1 1.8l3.65 6.3c.4.28.65.73.65 1.22 0 .83-.67 1.5-1.5 1.5zM9.5 18.5c0-.28.22-.5.5-.5h4c.28 0 .5.22.5.5v1c0 .28-.22.5-.5.5h-4c-.28 0-.5-.22-.5-.5v-1z"/></svg>
+                                 <span>PÉ DIREITO</span>
+                             </div>
+                         </div>
+                         <div class="slice"> <div class="slice-color"></div>
+                             <div class="content">
+                                 <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" transform="scale(-1, 1)" fill="#2563eb"><path d="M19.5 8.5c-.28 0-.5.22-.5.5v7c0 .28.22.5.5.5s.5-.22.5-.5v-7c0-.28-.22-.5-.5-.5zM17.5 8.5c-.28 0-.5.22-.5.5v7c0 .28.22.5.5.5s.5-.22.5-.5v-7c0-.28-.22-.5-.5-.5zM15.5 7.5c-.28 0-.5.22-.5.5v8c0 .28.22.5.5.5s.5-.22.5-.5v-8c0-.28-.22-.5-.5-.5zM13.5 7.5c-.28 0-.5.22-.5.5v8c0 .28.22.5.5.5s.5-.22.5-.5v-8c0-.28-.22-.5-.5-.5zM11 6.5c-.28 0-.5.22-.5.5v9c0 .28.22.5.5.5s.5-.22.5-.5v-9c0-.28-.22-.5-.5-.5zM8.5 10.72c-.8.5-1.5 1.3-1.5 2.28v2.5c0 .28.22.5.5.5h.5c.28 0 .5-.22.5-.5v-2.5c0-.4.3-.8.8-1.1l.4-.2c.6-.3 1-.9 1-1.6V9.5c0-.28-.22-.5-.5-.5h-1c-.28 0-.5.22-.5.5v1.22zM5.5 12.5c-.28 0-.5.22-.5.5v2.5c0 .28.22.5.5.5h.5c.28 0 .5-.22.5-.5v-2.5c0-.28-.22-.5-.5-.5h-.5z"/></svg>
+                                 <span>MÃO ESQUERDA</span>
+                             </div>
+                         </div>
+                     </div>
+                 </div>
+            </div>
+        </div>
+
+        <div class="buttons-container">
+            <button id="spinColorButton" class="spin-button">Girar Cor</button>
+            <button id="spinBodyPartButton" class="spin-button">Girar Mão/Pé</button>
+            <button id="spinBothButton" class="spin-button">Girar Ambas</button>
+        </div>
+
+        <div id="resultBox" class="result-box">Clique em um botão para girar</div>
+
+        <div class="history-container">
+          <h3 class="text-lg font-semibold mb-2 text-center">Últimos 5 Movimentos (Ambas)</h3>
+          <table id="historyTable">
+            <thead>
+              <tr>
+                <th>Jogada</th>
+                <th>Resultado</th>
+              </tr>
+            </thead>
+            <tbody id="historyBody">
+              </tbody>
+          </table>
+        </div>
+
+    </div>
+
+    <script>
+        // --- Elementos ---
+        const spinnerColor = document.getElementById('spinnerColor');
+        const spinnerBodyPart = document.getElementById('spinnerBodyPart');
+        const spinColorButton = document.getElementById('spinColorButton');
+        const spinBodyPartButton = document.getElementById('spinBodyPartButton');
+        const spinBothButton = document.getElementById('spinBothButton');
+        const resultBox = document.getElementById('resultBox');
+        const historyBody = document.getElementById('historyBody');
+        const allSpinButtons = [spinColorButton, spinBodyPartButton, spinBothButton];
+
+        // --- Configurações ---
+        const slicesColor = 12;
+        const slicesBodyPart = 4;
+        const angleColor = 360 / slicesColor; // 30 graus
+        const angleBodyPart = 360 / slicesBodyPart; // 90 graus
+        const animationTime = 4000; // ms
+
+        // --- Estado ---
+        let currentRotationColor = 0;
+        let currentRotationBodyPart = 0;
+        let isSpinning = false;
+        let moveHistory = [];
+        let lastResultColor = "N/A";
+        let lastResultBodyPart = "N/A";
+
+        // --- Mapas de Resultados ---
+        const colorMap = [
+            'Vermelho', 'Amarelo', 'Azul', 'Verde',  // 1-4 (0 a 120 graus)
+            'Vermelho', 'Azul', 'Amarelo', 'Verde',  // 5-8 (120 a 240 graus)
+            'Vermelho', 'Azul', 'Amarelo', 'Verde'   // 9-12 (240 a 360 graus)
+        ];
+        const bodyPartMap = [ // 4 fatias, ordem 0-90, 90-180, ...
+            'MÃO DIREITA', 'PÉ ESQUERDO', 'PÉ DIREITO', 'MÃO ESQUERDA'
+        ];
+
+        // --- Funções Auxiliares ---
+
+        function spinWheel(spinnerElement, currentRotation, numSlices) {
+            const sliceAngle = 360 / numSlices;
+            const randomTurns = Math.floor(Math.random() * 6) + 5;
+            const randomDegrees = Math.floor(Math.random() * 360);
+            const slightOffset = Math.random() * (sliceAngle * 0.8) + (sliceAngle * 0.1);
+            const rotationChange = (randomTurns * 360) + randomDegrees + slightOffset;
+            const targetRotation = currentRotation - rotationChange;
+            spinnerElement.style.transform = `rotate(${targetRotation}deg)`;
+            return targetRotation;
+        }
+
+        function calculateResult(finalRotation, numSlices, resultMap) {
+            const sliceAngle = 360 / numSlices;
+            const normalizedAngle = ((-finalRotation % 360) + 360) % 360;
+            const adjustedAngle = (normalizedAngle + sliceAngle / 2) % 360;
+            const winningSliceIndex = Math.floor(adjustedAngle / sliceAngle);
+            const safeIndex = winningSliceIndex % resultMap.length;
+            return resultMap[safeIndex];
+        }
+
+        function setButtonsDisabled(disabled) {
+             isSpinning = disabled;
+             allSpinButtons.forEach(button => button.disabled = disabled);
+        }
+
+         function updateHistoryTable() {
+            historyBody.innerHTML = '';
+            moveHistory.forEach((move, index) => {
+                const row = historyBody.insertRow();
+                const cell1 = row.insertCell(); cell1.textContent = index + 1;
+                const cell2 = row.insertCell(); cell2.textContent = move;
+            });
+        }
+
+        // --- Event Listeners ---
+
+        spinColorButton.addEventListener('click', () => {
+            if (isSpinning) return;
+            setButtonsDisabled(true);
+            resultBox.textContent = 'Girando Cor...';
+            currentRotationColor = spinWheel(spinnerColor, currentRotationColor, slicesColor);
+            setTimeout(() => {
+                lastResultColor = calculateResult(currentRotationColor, slicesColor, colorMap);
+                resultBox.textContent = `Cor: ${lastResultColor}`;
+                setButtonsDisabled(false);
+            }, animationTime);
+        });
+
+        spinBodyPartButton.addEventListener('click', () => {
+            if (isSpinning) return;
+            setButtonsDisabled(true);
+            resultBox.textContent = 'Girando Mão/Pé...';
+            currentRotationBodyPart = spinWheel(spinnerBodyPart, currentRotationBodyPart, slicesBodyPart);
+            setTimeout(() => {
+                lastResultBodyPart = calculateResult(currentRotationBodyPart, slicesBodyPart, bodyPartMap);
+                resultBox.textContent = `Mão/Pé: ${lastResultBodyPart}`;
+                setButtonsDisabled(false);
+            }, animationTime);
+        });
+
+        spinBothButton.addEventListener('click', () => {
+             if (isSpinning) return;
+            setButtonsDisabled(true);
+            resultBox.textContent = 'Girando Ambas...';
+            currentRotationColor = spinWheel(spinnerColor, currentRotationColor, slicesColor);
+            currentRotationBodyPart = spinWheel(spinnerBodyPart, currentRotationBodyPart, slicesBodyPart);
+            setTimeout(() => {
+                lastResultColor = calculateResult(currentRotationColor, slicesColor, colorMap);
+                lastResultBodyPart = calculateResult(currentRotationBodyPart, slicesBodyPart, bodyPartMap);
+                const resultString = `${lastResultColor} - ${lastResultBodyPart}`;
+                resultBox.textContent = `Resultado: ${resultString}`;
+                moveHistory.unshift(resultString);
+                if (moveHistory.length > 5) {
+                    moveHistory.pop();
+                }
+                updateHistoryTable();
+                setButtonsDisabled(false);
+            }, animationTime);
+        });
+
+    </script>
+
+</body>
+</html>
